@@ -7,102 +7,87 @@ import java.util.List;
 public class ConfigurationImpl implements Configuration{
 
 
-	public  TuringMachine tm;
-	private HashMap<Integer, Character> tape;
-	private int currentPosition;
-	private String currentState;
+	private Tape tape;
+    private int currentPosition;
+    private String currentState;
+    private TuringMachine tm;
 
-	public ConfigurationImpl(TuringMachine tm) {
-		this.tm  = tm;
-		this.tape = new HashMap<Integer, Character>();
-		this.currentPosition = 0 ;
-		this.currentState = tm.getInitialState();
-	}
+    public ConfigurationImpl(TuringMachine tm, Tape tape) {
+        this.tm = tm;
+        this.tape = tape;
+        this.currentPosition = 0;
+        this.currentState = tm.getInitialState();
+    }
 
-	@Override
-	public int getLeftEnd() {
-		int leftEnd = Integer.MAX_VALUE;
-		for(int item : this.tape.keySet()) {
-			leftEnd = item < leftEnd ? item : leftEnd ;
-		}
-		return leftEnd ;
-	}
+    @Override
+    public int getLeftEnd() {
+        return tape.getLeftEnd();
+    }
 
-	@Override
-	public int getRightEnd() {
-		int rightEnd = Integer.MIN_VALUE;
-		for(int item : this.tape.keySet()) {
-			rightEnd = item < rightEnd ? item : rightEnd ;
-		}
-		return rightEnd ;
-	}
+    @Override
+    public int getRightEnd() {
+        return tape.getRightEnd();
+    }
 
-	@Override
-	public int getCurrentPosition() {
-		return this.currentPosition;
-	}
+    @Override
+    public int getCurrentPosition() {
+        return this.currentPosition;
+    }
 
-	@Override
-	public String getCurrentState() {
-		return this.currentState;
-	}
+    @Override
+    public String getCurrentState() {
+        return this.currentState;
+    }
 
-	@Override
-	public char getTapeCellSymbol(int position) {
-	
-		return this.tape.keySet().contains(position) ? this.tape.get(position) : this.tm.getBlankSymbol();
-	}
+    @Override
+    public char getTapeCellSymbol(int position) {
+        return tape.getSymbol(position);
+    }
 
-	@Override
-	public boolean canAdvance() {
-		boolean canAdvance = false ; 
-		for(int i = 0 ; i < tm.getRuleCount() ; i ++) {
-			canAdvance =  currentState.equals(tm.getRuleState(i)) && tape.get(currentPosition).equals(tm.getRuleSymbol(i));
-			
-		}
-		
-		return canAdvance ;
-	}
+    @Override
+    public boolean canAdvance() {
+        for (int i = 0; i < tm.getRuleCount(); i++) {
+            if (currentState.equals(tm.getRuleState(i)) && tape.getSymbol(currentPosition) == tm.getRuleSymbol(i)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-	private int getSuitableRuleNum (int currentPosition, String currentState, TuringMachine tm) {
-		int suitableRule = -1 ;
-		for(int i = 0 ; i < tm.getRuleCount() ; i ++) {
-			suitableRule = currentState.equals(tm.getRuleState(i)) && tape.get(currentPosition).equals(tm.getRuleSymbol(i)) ? i : -1 ;
-		}
-		return suitableRule ;
-	}
-	
-	@Override
-	public void advance() {
-		
-		int suitableRuleNum = getSuitableRuleNum(this.currentPosition, this.currentState, this.tm);
-		
-		
-		setCurrentState(this.tm.getRuleNewState(suitableRuleNum));
-		
-		setTapeCell(this.currentPosition, this.tm.getRuleNewSymbol(suitableRuleNum));
-		
-		int positionEffect = tm.getRuleDirection(suitableRuleNum).equals(Direction.RIGHT) ? 1 : -1 ;
-		setPosition(this.currentPosition + positionEffect);
-		
+    @Override
+    public void advance() {
+        if (canAdvance()) {
+            int suitableRuleNum = getSuitableRuleNum(this.currentPosition, this.currentState, this.tm);
+            setCurrentState(this.tm.getRuleNewState(suitableRuleNum));
+            setTapeCell(this.currentPosition, this.tm.getRuleNewSymbol(suitableRuleNum));
+            int positionEffect = tm.getRuleDirection(suitableRuleNum) == Direction.RIGHT ? 1 : -1;
+            setPosition(this.currentPosition + positionEffect);
+        }
+    }
 
-	}
+    private int getSuitableRuleNum(int currentPosition, String currentState, TuringMachine tm) {
+        for (int i = 0; i < tm.getRuleCount(); i++) {
+            if (currentState.equals(tm.getRuleState(i)) && tape.getSymbol(currentPosition) == tm.getRuleSymbol(i)) {
+                return i;
+            }
+        }
+        return -1;
+    }
 
-	@Override
-	public void setTapeCell(int position, char newValue) {
-		this.tape.put(position, newValue);
-	}
+    @Override
+    public void setTapeCell(int position, char newValue) {
+        tape.setSymbol(position, newValue);
+    }
 
-	@Override
-	public void setPosition(int position) {
-		this.currentPosition = position ;
-	}
+    @Override
+    public void setPosition(int position) {
+        this.currentPosition = position;
+    }
 
-	@Override
-	public void setCurrentState(String state) {
-		this.currentState = state ;
-		
-	}
+    @Override
+    public void setCurrentState(String state) {
+        this.currentState = state;
+    }
 
 	@Override
 	public void addConfigurationObserver(ConfigurationObserver o) {
